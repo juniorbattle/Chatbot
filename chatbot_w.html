@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Chatbot Agence Web</title>
+        <!-- Bootstrap CSS -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+        <!-- AOS Animation -->
+        <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+        <!-- Font Awesome -->
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <!-- Google Fonts -->
+        <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+        <style>
+            body {
+                font-family:'Inter',sans-serif;
+            }
+            
+            .chat-container{position:fixed;right:-380px;bottom:15%;z-index:1000;display:flex;align-items:center;transition:all .3s ease;flex-direction:row}
+            .chat-container.chat-open{max-width:95%;right:10px;align-items:normal}
+            .chat-container .chat-header{background:#7a0606;background:linear-gradient(135deg,#7a0606,#d10d0d);color:#fff;padding:20px 15px;border-radius:16px 0 0 16px;cursor:pointer;writing-mode:vertical-rl;transform:rotate(0);white-space:nowrap;transition:all .3s ease;display:flex;align-items:center;gap:15px;box-shadow:2px 0 15px rgba(0,0,0,.1)}
+            .chat-container .chat-header:hover{transform:rotate(0) translateX(-2px)}
+            .chat-container.chat-open .chat-header:hover{transform:rotate(0) translateX(2px)}
+            .chat-container .chat-body{width:380px;height:500px;background:#fff;border-radius:0 16px 16px 0;box-shadow:0 10px 25px rgba(0,0,0,.1);opacity:0;transition:all .3s ease;position:relative;pointer-events:none}
+            .chat-container.chat-open .chat-body{opacity:1;pointer-events:all}
+            .chat-container .fa-chevron-left,.chat-container .fa-chevron-right{transform:rotate(90deg);transition:transform .3s ease}
+            .chat-container.chat-open .fa-chevron-right{transform:rotate(-90deg)}
+            .chat-container .chat-content-wrapper{display:flex;height:100%}
+            .chat-container .chat-messaging{flex:1;display:flex;flex-direction:column;min-width:0}
+            .chat-container .form-sidebar{display:none;width:85%;background-color:#f8f9fa;box-shadow:-5px 0 15px rgba(0,0,0,.05);padding:20px;transition:all .3s ease;transform:translateX(100%);position:absolute;top:0;bottom:0;right:0;z-index:10;border-radius:0 0 16px 0;overflow-y:auto}
+            .chat-container .form-visible .form-sidebar{transform:translateX(0)}
+            .chat-container .form-visible .chat-messaging{width:calc(100% - 320px)}
+            .chat-container .messages-container{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;background-color:#fff;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100' viewBox='0 0 100 100'%3E%3Cg fill-rule='evenodd'%3E%3Cg fill='%23f2f2f2' fill-opacity='0.4'%3E%3Cpath opacity='.5' d='M96 95h4v1h-4v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4h-9v4h-1v-4H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15v-9H0v-1h15V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h9V0h1v15h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9h4v1h-4v9zm-1 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm9-10v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-10 0v-9h-9v9h9zm-9-10h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9zm10 0h9v-9h-9v9z'/%3E%3Cpath d='M6 5V0H5v5H0v1h5v94h1V6h94V5H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")}
+            .chat-container .message{margin-bottom:15px;max-width:85%;padding:12px 16px;border-radius:18px;position:relative;line-height:1.5;font-size:.95rem;animation:fadeIn .4s ease;box-shadow:0 2px 5px rgba(0,0,0,.05)}
+            .chat-container .bot-message{background-color:#f1f4f9;border-radius:18px 18px 18px 4px;align-self:flex-start;color:#333;border-left:3px solid #7a0606}
+            .chat-container .user-message{background-color:#7a0606;color:#fff;border-radius:18px 18px 4px 18px;align-self:flex-end;margin-left:auto}
+            .chat-container .quick-replies-floating{padding:8px 15px;display:flex;flex-wrap:wrap;justify-content:center;gap:8px;max-height:100px;overflow-y:auto;z-index:5;pointer-events:none}
+            .chat-container .quick-reply{pointer-events:auto;display:inline-block;margin:0;padding:8px 15px;background-color:#f8f9fa;border:1px solid #e9ecef;border-radius:30px;cursor:pointer;transition:all .2s;font-size:.85rem;white-space:nowrap;box-shadow:0 2px 5px rgba(0,0,0,.05)}
+            .chat-container .quick-reply:hover{background-color:#7a0606;color:#fff;transform:translateY(-2px);box-shadow:0 5px 10px rgba(0,0,0,.1)}
+            .chat-container .input-area{border-top:1px solid #eee;padding:15px;background-color:#fff;display:flex;align-items:center;position:relative;border-radius:0 0 16px 16px}
+            .chat-container .typing-indicator{display:flex;padding:10px;align-items:center}
+            .chat-container .typing-dot{width:8px;height:8px;background-color:#7a0606;border-radius:50%;margin:0 3px;animation:typingAnimation 1.4s infinite ease-in-out;opacity:.7}
+            .chat-container .typing-dot:nth-child(1){animation-delay:0s}
+            .chat-container .typing-dot:nth-child(2){animation-delay:.2s}
+            .chat-container .typing-dot:nth-child(3){animation-delay:.4s}
+            @keyframes typingAnimation{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-5px)}}
+            @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+            .chat-container .form-control{border-radius:30px;padding:12px 20px;border:1px solid #e6e6e6;box-shadow:0 2px 10px rgba(0,0,0,.03);font-size:.95rem;transition:all .2s}
+            .chat-container .form-control:focus{border-color:#7a0606;box-shadow:0 0 0 3px rgba(67,97,238,.2)}
+            .chat-container .input-group{box-shadow:0 2px 10px rgba(0,0,0,.05);border-radius:30px;overflow:hidden}
+            .chat-container .btn-primary{background-color:#7a0606;border-color:#7a0606;border-radius:50%;width:45px;height:45px;display:flex;align-items:center;justify-content:center;padding:0;transition:all .3s}
+            .chat-container .btn-primary-alt{background-color:#7a0606;border-color:#7a0606;color:#fff;display:flex;align-items:center;justify-content:center;padding:0;transition:all .3s}
+            .chat-container .btn-primary:hover,.chat-container .btn-primary-alt:hover{background-color:#5d0505;transform:scale(1.05);color:#fff}
+            .chat-container .cta-button{background:linear-gradient(135deg,#7a0606,#d10d0d);border:none;color:#fff;padding:12px 25px;border-radius:30px;font-weight:600;text-transform:uppercase;letter-spacing:1px;transition:all .3s;box-shadow:0 5px 15px rgba(67,97,238,.3);position:relative;overflow:hidden}
+            .chat-container .cta-button:hover{transform:translateY(-3px);box-shadow:0 8px 25px rgba(67,97,238,.4)}
+            .chat-container .cta-button:after{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,hsla(0,0%,100%,.2),hsla(0,0%,100%,0));transform:translateX(-100%);transition:transform .6s}
+            .chat-container .cta-button:hover:after{transform:translateX(100%)}
+            .chat-container .form-label{font-weight:500;font-size:.9rem;margin-bottom:5px;color:#444}
+            .chat-container .form-sidebar h4{color:#7a0606;margin-bottom:20px;font-weight:600;text-align:center;position:relative}
+            .chat-container .form-sidebar h4:after{content:'';position:absolute;bottom:-8px;left:50%;transform:translateX(-50%);width:50px;height:3px;background:linear-gradient(to right,#7a0606,#d10d0d);border-radius:3px}
+            .chat-container .form-group{margin-bottom:20px}
+            .chat-container .btn-outline-secondary{border-color:#ccc;color:#666;background-color:transparent;transition:all .3s}
+            .chat-container .btn-outline-secondary:hover{background-color:#f1f1f1;color:#333;border-color:#aaa}
+            .chat-container .hidden{display:none}
+            .chat-container .ai-thinking{font-style:italic;color:#666;font-size:.85em;margin-bottom:10px;align-self:flex-start;background-color:#f0f0f0;padding:6px 12px;border-radius:12px;animation:pulse 1.5s infinite}
+            @keyframes pulse{0%{opacity:.6}50%{opacity:1}100%{opacity:.6}}
+            .chat-container .close-form{position:absolute;top:10px;right:10px;background:#f0f0f0;border:none;border-radius:50%;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s}
+            .chat-container .close-form:hover{background:#e0e0e0;transform:rotate(90deg)}
+            .chat-container .bot-avatar{width:35px;height:35px;background:linear-gradient(135deg,#7a0606,#d10d0d);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:1.2rem;box-shadow:0 3px 10px rgba(0,0,0,.1)}
+            .chat-container .messages-container::-webkit-scrollbar,.chat-container .form-sidebar::-webkit-scrollbar{width:6px}
+            .chat-container .messages-container::-webkit-scrollbar-track,.chat-container .form-sidebar::-webkit-scrollbar-track{background:#f1f1f1;border-radius:10px}
+            .chat-container .messages-container::-webkit-scrollbar-thumb,.chat-container .form-sidebar::-webkit-scrollbar-thumb{background:#c0c0c0;border-radius:10px}
+            .chat-container .messages-container::-webkit-scrollbar-thumb:hover,.chat-container .form-sidebar::-webkit-scrollbar-thumb:hover{background:#a0a0a0}
+            @keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+            .chat-container .form-sidebar{animation:slideIn .4s forwards}
+        </style>
+    </head>
+    <body>
+        <!-- Chatbot Container -->
+        <div class="chat-container" id="chatContainer">
+            <div class="chat-header" id="chatHeader">
+                <div class="d-flex align-items-center">
+                    <div class="bot-avatar">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="chat-body" id="chatBody">
+                <div class="chat-content-wrapper">
+                    <div class="chat-messaging">
+                        <div class="messages-container" id="messagesContainer">
+                            <!-- Messages will be added here dynamically -->
+                        </div>
+                        
+                        <div class="quick-replies-floating" id="quickReplies">
+                            <!-- Quick replies will be added here dynamically -->
+                        </div>
+                        
+                        <div class="input-area">
+                            <div class="input-group" id="textInputGroup">
+                                <input type="text" class="form-control" id="userInput" placeholder="Tapez votre message..." aria-label="Message">
+                                <button class="btn btn-primary" type="button" id="sendButton">
+                                    <i class="fas fa-paper-plane"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Formulaire de contact -->
+            <div class="form-sidebar" id="appointmentForm">
+                <button class="close-form" id="cancelForm">
+                    <i class="fas fa-times"></i>
+                </button>
+                <h4 id="formTitle">Prendre Rendez-vous</h4>
+                <form id="rdvForm">
+                    <div class="form-group">
+                        <label for="name" class="form-label" id="nameLabel">Nom complet</label>
+                        <input type="text" class="form-control" id="name" placeholder="Votre nom et prénom" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email" class="form-label" id="emailLabel">Email</label>
+                        <input type="email" class="form-control" id="email" placeholder="votre@email.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="phone" class="form-label" id="phoneLabel">Téléphone</label>
+                        <input type="tel" class="form-control" id="phone" placeholder="06 XX XX XX XX" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="message" class="form-label" id="messageLabel">Détails du projet</label>
+                        <textarea class="form-control" id="message" rows="3" placeholder="Décrivez brièvement votre projet"></textarea>
+                    </div>
+                    <div class="d-flex justify-content-between mt-4">
+                        <button type="button" class="btn btn-outline-secondary px-4" id="backToChat">Annuler</button>
+                        <button type="submit" class="btn btn-primary-alt px-4" id="confirmButton">Confirmer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Bootstrap JS Bundle with Popper -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+        <!-- AOS Animation JS -->
+        <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+        <script>
+            // Initialize AOS
+            AOS.init({
+                duration: 800,
+                easing: 'ease-in-out',
+                once: true
+            });
+
+            // Chatbot functionality
+            document.addEventListener('DOMContentLoaded', function() {
+                // Get language from URL parameter
+                const urlParams = new URLSearchParams(window.location.search);
+                const lang = urlParams.get('lang') || 'en'; // Default to French if not specified
+                
+                // Language translations
+                const translations = {
+                    fr: {
+                        inputPlaceholder: "Tapez votre message...",
+                        formTitle: "Prendre Rendez-vous",
+                        nameLabel: "Nom complet",
+                        namePlaceholder: "Votre nom et prénom",
+                        emailLabel: "Email",
+                        emailPlaceholder: "votre@email.com",
+                        phoneLabel: "Téléphone",
+                        phonePlaceholder: "06 XX XX XX XX",
+                        messageLabel: "Détails du projet",
+                        messagePlaceholder: "Décrivez brièvement votre projet",
+                        cancelButton: "Annuler",
+                        confirmButton: "Confirmer",
+                        welcomeMessage: "Bonjour ! Je suis l'assistant digital de Wonmii Agency. Comment puis-je vous aider aujourd'hui ?",
+                        quickReplies: [
+                            "Prendre rendez-vous",
+                            "Création de site web",
+                            "Intégration IA",
+                            "SEO et référencement"
+                        ],
+                        websiteCreation: "Nous créons des sites web modernes, responsives et optimisés pour le SEO. Nos sites sont développés avec les dernières technologies et bibliothèques web",
+                        priceMessage: "Nos tarifs varient selon la complexité du projet. Nous concevons des sites vitrine avec un design unique à partir de 1490$. Nous proposons des devis personnalisés.",
+                        timelineMessage: "Le délai de création d'un site dépend de sa complexité. En moyenne, nous concevons un Site vitrine optimal en 72 heures.",
+                        aiIntegration: "L'intégration d'IA dans un site vitrine statique peut le rendre plus interactif et performant !",
+                        aiQuestion: "Quel type de fonctionnalité IA vous intéresse ?",
+                        chatbotFeatures: "Notre solution de chatbot IA pour sites vitrines offre :",
+                        chatbotDetails: "Assistance 24/7 avec NLP avancé, Qualification automatique des leads, Scripts pré-intégrés pour FAQs, Analytics intégré des interactions",
+                        seoMessage1: "Le SEO est crucial pour améliorer votre visibilité sur Google et attirer plus de visiteurs.",
+                        seoMessage2: "Notre stratégie SEO comprend : audit technique, recherche de mots-clés, optimisation on-page, création de contenu et netlinking. Nous garantissons une amélioration visible en 3-6 mois.",
+                        formInstructions: "Remplissez ce formulaire pour prendre rendez-vous avec un expert. Nous vous contacterons dans les 24h.",
+                        formSubmitThanks: "Merci {name} ! Votre demande de rendez-vous a bien été enregistrée.",
+                        formSubmitContact: "Un conseiller vous contactera très rapidement au {phone} ou à l'adresse {email}.",
+                        whatElseHelp: "Pendant que vous attendez, puis-je vous aider sur autre chose ?",
+                        backToOptions: "Bien sûr ! Comment puis-je vous aider ?",
+                        aiNotUnderstand: "Je ne suis pas sûr de comprendre votre demande. Pourriez-vous reformuler ou poser une question plus précise ?",
+                        price: "Prix",
+                        timeline: "Délai",
+                        back: "Retour",
+                        chatbotOption: "Chatbot intelligent",
+                        requestSeoAudit: "Demander un audit SEO",
+                        bookAppointment: "Prendre rendez-vous",
+                        aiThinking: "L'assistant réfléchit..."
+                    },
+                    en: {
+                        inputPlaceholder: "Type your message...",
+                        formTitle: "Book an Appointment",
+                        nameLabel: "Full Name",
+                        namePlaceholder: "Your first and last name",
+                        emailLabel: "Email",
+                        emailPlaceholder: "your@email.com",
+                        phoneLabel: "Phone",
+                        phonePlaceholder: "123 456 7890",
+                        messageLabel: "Project Details",
+                        messagePlaceholder: "Briefly describe your project",
+                        cancelButton: "Cancel",
+                        confirmButton: "Confirm",
+                        welcomeMessage: "Hello! I'm the digital assistant for Wonmii Agency. How can I help you today?",
+                        quickReplies: [
+                            "Book an appointment",
+                            "Website creation",
+                            "AI integration",
+                            "SEO and ranking"
+                        ],
+                        websiteCreation: "We create modern, responsive websites optimized for SEO. Our sites are developed with the latest web technologies and libraries.",
+                        priceMessage: "Our rates vary according to project complexity. We design showcase websites with unique designs starting from $1490. We offer personalized quotes.",
+                        timelineMessage: "The website creation timeline depends on its complexity. On average, we design an optimal showcase website in 72 hours.",
+                        aiIntegration: "AI integration in a static website can make it more interactive and efficient!",
+                        aiQuestion: "What type of AI functionality are you interested in?",
+                        chatbotFeatures: "Our AI chatbot solution for showcase websites offers:",
+                        chatbotDetails: "24/7 assistance with advanced NLP, Automatic lead qualification, Pre-integrated scripts for FAQs, Integrated analytics of interactions",
+                        seoMessage1: "SEO is crucial for improving your visibility on Google and attracting more visitors.",
+                        seoMessage2: "Our SEO strategy includes: technical audit, keyword research, on-page optimization, content creation, and link building. We guarantee visible improvement in 3-6 months.",
+                        formInstructions: "Fill out this form to book an appointment with an expert. We'll contact you within 24 hours.",
+                        formSubmitThanks: "Thank you {name}! Your appointment request has been successfully registered.",
+                        formSubmitContact: "An advisor will contact you soon at {phone} or at {email}.",
+                        whatElseHelp: "While you wait, can I help you with anything else?",
+                        backToOptions: "Of course! How can I help you?",
+                        aiNotUnderstand: "I'm not sure I understand your request. Could you rephrase or ask a more specific question?",
+                        price: "Price",
+                        timeline: "Timeline",
+                        back: "Back",
+                        chatbotOption: "Smart chatbot",
+                        requestSeoAudit: "Request SEO audit",
+                        bookAppointment: "Book an appointment",
+                        aiThinking: "Assistant is thinking..."
+                    }
+                };
+
+                const languagePatterns = {
+                    CTA: {
+                        triggers: [],
+                        response: 'ctaMessage',
+                        replies: ['bookAppointment', 'back']
+                    },
+                    website: {
+                        triggers: ['création de site web', 'website creation', 'site web', 'website'],
+                        response: 'websiteCreation',
+                        replies: ['price', 'timeline', 'back']
+                    },
+                    price: {
+                        triggers: ['prix', 'price', 'tarif', 'cost'],
+                        response: 'priceMessage',
+                        replies: ['timeline', 'back']
+                    },
+                    timeline: {
+                        triggers: ['délai', 'timeline', 'durée', 'timeframe'],
+                        response: 'timelineMessage',
+                        replies: ['price', 'back']
+                    },
+                    aiIntegration: {
+                        triggers: ['intégration ia', 'ai integration', 'ia', 'artificial intelligence'],
+                        response: 'aiIntegration',
+                        question: 'aiQuestion',
+                        replies: ['chatbotOption', 'back']
+                    },
+                    chatbot: {
+                        triggers: ['chatbot intelligent', 'smart chatbot', 'chatbot ia', 'ai chatbot'],
+                        response: 'chatbotFeatures',
+                        details: 'chatbotDetails',
+                        replies: ['back']
+                    },
+                    seo: {
+                        triggers: ['seo et référencement', 'seo and ranking', 'référencement', 'seo'],
+                        response: 'seoMessage1',
+                        secondMessage: 'seoMessage2',
+                        replies: ['requestSeoAudit', 'back']
+                    },
+                    appointment: {
+                        triggers: ['prendre rendez-vous', 'book an appointment', 'rendez-vous', 'appointment'],
+                        action: 'showFormAction'
+                    },
+                    audit: {
+                        triggers: ['demander un audit', 'request seo audit', 'audit seo', 'seo audit'],
+                        action: 'showFormAction'
+                    },
+                    back: {
+                        triggers: ['retour', 'back'],
+                        response: 'backToOptions',
+                        replies: 'reset'
+                    }
+                };
+
+                
+                // Apply translations based on selected language
+                const t = translations[lang];
+
+                const CHAT_CONFIG = {
+                    maxHistory: 10,
+                    apiChatbotAI: 'https://chatbot-helper.mitshi.workers.dev',
+                    apiSendEmail: 'https://send-email.mitshi.workers.dev'
+                };
+
+                // État du chat
+                const chatState = {
+                    history: [],
+                    isProcessing: false,
+                    initialized: false
+                };
+                
+                // Update UI elements with translations
+                document.getElementById('userInput').placeholder = t.inputPlaceholder;
+                document.getElementById('formTitle').textContent = t.formTitle;
+                document.getElementById('nameLabel').textContent = t.nameLabel;
+                document.getElementById('name').placeholder = t.namePlaceholder;
+                document.getElementById('emailLabel').textContent = t.emailLabel;
+                document.getElementById('email').placeholder = t.emailPlaceholder;
+                document.getElementById('phoneLabel').textContent = t.phoneLabel;
+                document.getElementById('phone').placeholder = t.phonePlaceholder;
+                document.getElementById('messageLabel').textContent = t.messageLabel;
+                document.getElementById('message').placeholder = t.messagePlaceholder;
+                document.getElementById('backToChat').textContent = t.cancelButton;
+                document.getElementById('confirmButton').textContent = t.confirmButton;
+                
+                const chatContainer = document.getElementById('chatContainer');
+                const chatHeader = document.getElementById('chatHeader');
+                const chatBody = document.getElementById('chatBody');
+                const toggleIcon = document.getElementById('toggleIcon');
+                const messagesContainer = document.getElementById('messagesContainer');
+                const quickReplies = document.getElementById('quickReplies');
+                const userInput = document.getElementById('userInput');
+                const sendButton = document.getElementById('sendButton');
+                const textInputGroup = document.getElementById('textInputGroup');
+                const appointmentForm = document.getElementById('appointmentForm');
+                const rdvForm = document.getElementById('rdvForm');
+                const cancelForm = document.getElementById('cancelForm');
+                const backToChat = document.getElementById('backToChat');
+                
+                let isChatOpen = false;
+                let isFormVisible = false;
+
+                // Use translated quick replies
+                let quickRepliesMessages = t.quickReplies;
+                
+
+                /// ACTIONS ///
+
+                // Toggle chat
+                chatHeader.addEventListener('click', function() {
+                    isChatOpen = !isChatOpen;
+                    chatContainer.classList.toggle('chat-open', isChatOpen);
+                    
+                    if (isChatOpen) {
+                        // Start conversation when opening chat
+                        if (messagesContainer.children.length === 0) {
+                            setTimeout(() => {
+                                addBotMessage(t.welcomeMessage, 400);
+                                showQuickReplies(quickRepliesMessages);
+                            }, 500);
+                        }
+                    }
+                });
+                
+                // Send message on button click
+                sendButton.addEventListener('click', sendMessage);
+                
+                // Send message on Enter key
+                userInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        sendMessage();
+                    }
+                });
+                
+                
+                /// FORM FUNCTIONS ///
+                
+                rdvForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    submitAppointmentForm();
+                });
+                
+                cancelForm.addEventListener('click', function() {
+                    hideAppointmentForm();
+                    addBotMessage(t.backToOptions);
+                    showQuickReplies(quickRepliesMessages);
+                });
+                
+                backToChat.addEventListener('click', function() {
+                    hideAppointmentForm();
+                    addBotMessage(t.backToOptions);
+                    showQuickReplies(quickRepliesMessages);
+                });
+                
+                const actions = {
+                    showFormAction: () => showAppointmentForm(),
+                    otherAction: () => {
+                        // ... code ...
+                    }
+                };
+
+                function showAppointmentForm() {
+                    addBotMessage(t.formInstructions);
+                    setTimeout(() => {
+                        isFormVisible = true;
+                        chatContainer.classList.add('form-visible');
+                        appointmentForm.style.display = 'block';
+                    }, 2500);
+                }
+                
+                function hideAppointmentForm() {
+                    isFormVisible = false;
+                    chatContainer.classList.remove('form-visible');
+                    setTimeout(() => {
+                        appointmentForm.style.display = 'none';
+                    }, 300);
+                }
+                
+                async function submitAppointmentForm() {
+                    const formData = {
+                        name: document.getElementById('name').value,
+                        email: document.getElementById('email').value,
+                        phone: document.getElementById('phone').value,
+                        message: document.getElementById('message').value
+                    };
+                    
+                    // Here, you should send the data to your backend
+                    // For this example, we just simulate sending
+
+                    // Envoi au Worker Cloudflare
+                    try {
+                        const response = await fetch(CHAT_CONFIG.apiSendEmail, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(formData)
+                        });
+
+                        const result = await response.json();
+                    } catch (error) {
+                        // Gestion des erreurs
+                        console.log(`Sorry, an error has occurred : ${error.message}`);
+                    } finally {
+                        hideAppointmentForm();
+                        addBotMessage(t.formSubmitThanks.replace('{name}', formData.name));
+                        addBotMessage(t.formSubmitContact.replace('{phone}', formData.phone).replace('{email}', formData.email));
+                        
+                        // Reset the form
+                        rdvForm.reset();
+                        
+                        // Offer other options
+                        setTimeout(() => {
+                            addBotMessage(t.whatElseHelp);
+                            showQuickReplies(quickRepliesMessages);
+                        }, 1500);
+                    }
+                }
+
+                
+                /// MESSAGES FUNCTIONS ///
+
+                function sendMessage() {
+                    const message = userInput.value.trim();
+                    if (message) {
+                        addUserMessage(message);
+                        userInput.value = '';
+                        processUserMessage(message);
+                    }
+                }
+                
+                function addUserMessage(text) {
+                    const messageDiv = document.createElement('div');
+                    messageDiv.className = 'message user-message';
+                    messageDiv.textContent = text;
+                    messagesContainer.appendChild(messageDiv);
+                    scrollToBottom();
+                    addMessageToHistory('user', text);
+                }
+                
+                function addBotMessage(text, delay = 800) {
+                    // Show typing indicator
+                    const typingIndicator = document.createElement('div');
+                    typingIndicator.className = 'typing-indicator';
+                    typingIndicator.innerHTML = `
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    `;
+                    messagesContainer.appendChild(typingIndicator);
+                    scrollToBottom();
+                    
+                    // Remove typing indicator and add message after delay
+                    setTimeout(() => {
+                        messagesContainer.removeChild(typingIndicator);
+                        
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = 'message bot-message';
+                        messageDiv.textContent = text;
+                        messagesContainer.appendChild(messageDiv);
+                        scrollToBottom();
+                        addMessageToHistory('assistant', text);
+                    }, delay);
+                }
+                
+                function showQuickReplies(replies) {
+                    quickReplies.innerHTML = '';
+                    replies.forEach(reply => {
+                        const replySpan = document.createElement('span');
+                        replySpan.className = 'quick-reply';
+                        replySpan.textContent = reply;
+                        replySpan.addEventListener('click', function() {
+                            addUserMessage(reply);
+                            processUserMessage(reply);
+                        });
+                        quickReplies.appendChild(replySpan);
+                    });
+                }
+
+                async function processUserMessage(message) {
+                    // Clear quick replies while processing
+                    quickReplies.innerHTML = '';
+                    
+                    // Show AI is thinking
+                    const thinkingMsg = document.createElement('div');
+                    thinkingMsg.className = 'ai-thinking';
+                    thinkingMsg.textContent = t.aiThinking;
+                    messagesContainer.appendChild(thinkingMsg);
+                    scrollToBottom();
+                    
+                    // Simple keyword-based response system
+                    setTimeout(async () => {
+                        const lowerMessage = message.toLowerCase();
+                        let foundMatch = false;
+
+                       // messagesContainer.removeChild(thinkingMsg);
+
+                        for (const [key, pattern] of Object.entries(languagePatterns)) {
+                            if (pattern.triggers.some(trigger => lowerMessage.includes(trigger))) {
+                            foundMatch = true;
+
+                            messagesContainer.removeChild(thinkingMsg);
+                            
+                            // Gestion des actions spéciales
+                            if (pattern.action) {
+                                if (actions[pattern.action]) {
+                                    actions[pattern.action]();
+                                }
+                                break;
+                            }
+
+                            // Ajout des messages
+                            addBotMessage(t[pattern.response]);
+                            if (pattern.question) addBotMessage(t[pattern.question]);
+                            if (pattern.details) addBotMessage(t[pattern.details]);
+                            if (pattern.secondMessage) addBotMessage(t[pattern.secondMessage]);
+
+                            // Gestion des réponses
+                            const replies = pattern.replies === 'reset' ? 
+                                quickRepliesMessages : 
+                                pattern.replies.map(replyKey => t[replyKey]);
+
+                            showQuickReplies(replies);
+                            break;
+                            }
+                        }
+
+                        if (!foundMatch) {
+                            // Fallback IA
+                            const aiResponse = await callAIAssistant(message);
+
+                            messagesContainer.removeChild(thinkingMsg);
+
+                            addBotMessage(aiResponse);
+
+                            const replies = languagePatterns['CTA'].replies.map(replyKey => t[replyKey]);
+
+                            showQuickReplies(replies);
+                        }
+                    }, 1200);
+                }
+
+                // Simulation of an AI API
+                async function callAIAssistant(message) {
+                    // In a real implementation, you would make a request to an AI API like OpenAI
+                    try {
+                        const response = await fetch(CHAT_CONFIG.apiChatbotAI, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                message,
+                                history: chatState.history,
+                                language: lang 
+                            })
+                        });
+
+                        if (!response.ok) throw new Error('Network error');
+                        
+                        const data = await response.json();
+
+                        return  data.response;
+                    } catch (error) {
+                        console.log(`Sorry, an error has occurred : ${error.message}`);
+                        return t.aiNotUnderstand;
+                    } 
+
+                    // Here's a simple local simulation
+                    // return t.aiNotUnderstand;
+                }
+
+
+                /// OTHER FUNCTIONS ///
+
+                function addMessageToHistory(role, content) {
+                    chatState.history.push({ role, content });
+
+                    if (chatState.history.length > CHAT_CONFIG.maxHistory) {
+                        chatState.history = chatState.history.slice(-CHAT_CONFIG.maxHistory);
+                    }
+                }
+
+                function scrollToBottom() {
+                    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+                }
+
+                // Function to adjust chat height to the window
+                function adjustChatHeight() {
+                    const windowHeight = window.innerHeight;
+                    const maxChatHeight = windowHeight * 0.8; // 80% of window height
+                    
+                    if (isChatOpen) {
+                        chatBody.style.height = Math.min(500, maxChatHeight) + 'px';
+                    }
+                }
+
+                // Adjust height when resizing the window
+                window.addEventListener('resize', adjustChatHeight);
+
+                // Auto-open chat after 5 seconds with animation
+                setTimeout(() => {
+                    if (!isChatOpen) {
+                        chatHeader.click();
+                        chatContainer.style.animation = 'bounce 0.5s';
+                    }
+                }, 5000);
+            });
+        </script>
+    </body>
+</html>
