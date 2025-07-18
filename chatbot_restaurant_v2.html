@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sakura Sushi - Chatbot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .chat-message {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .chat-container {
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            border-radius: 1.5rem;
+            overflow: hidden;
+        }
+        
+        .bot-avatar {
+            background: linear-gradient(135deg, #f87171, #ef4444);
+        }
+        
+        .user-avatar {
+            background: linear-gradient(135deg, #60a5fa, #3b82f6);
+        }
+        
+        .option-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+        
+        .menu-item {
+            transition: all 0.2s ease;
+        }
+        
+        .menu-item:hover {
+            transform: scale(1.02);
+        }
+        
+        .reservation-form input:focus {
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.5);
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
+        }
+        
+        .typing div {
+            animation: bounce 1s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="chat-container bg-white w-full max-w-md h-[600px] flex flex-col">
+        <!-- Chat header -->
+        <div class="bg-red-500 text-white p-4 flex items-center">
+            <div class="bot-avatar w-10 h-10 rounded-full flex items-center justify-center mr-3">
+                <i class="fas fa-fish text-white"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg">Sakura Sushi</h1>
+                <p class="text-xs opacity-80">En ligne</p>
+            </div>
+            <button id="close-chat" class="ml-auto text-white opacity-70 hover:opacity-100">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <!-- Chat messages -->
+        <div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-3">
+            <!-- Messages will be added here dynamically -->
+        </div>
+        
+        <!-- Quick options -->
+        <div id="quick-options" class="p-3 bg-gray-50 border-t flex flex-wrap gap-2 hidden">
+            <!-- Options will be added here dynamically -->
+        </div>
+        
+        <!-- Input area -->
+        <div class="p-3 border-t bg-white">
+            <div class="flex">
+                <input id="user-input" type="text" placeholder="Écrivez votre message..." class="flex-1 border rounded-l-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-300">
+                <button id="send-btn" class="bg-red-500 text-white px-4 py-2 rounded-r-lg hover:bg-red-600 transition">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatMessages = document.getElementById('chat-messages');
+            const userInput = document.getElementById('user-input');
+            const sendBtn = document.getElementById('send-btn');
+            const quickOptions = document.getElementById('quick-options');
+            const closeChatBtn = document.getElementById('close-chat');
+            
+            // Initial bot message
+            setTimeout(() => {
+                addBotMessage("Bonjour et bienvenue chez Sakura Sushi ! 🍣 Je suis votre assistant virtuel. Comment puis-je vous aider aujourd'hui ?");
+                showQuickOptions([
+                    {text: "Voir le menu", action: "showMenu"},
+                    {text: "Provenance des produits", action: "showOrigin"},
+                    {text: "Histoire du restaurant", action: "showHistory"},
+                    {text: "Faire une réservation", action: "showReservation"}
+                ]);
+            }, 500);
+            
+            // Send message on button click
+            sendBtn.addEventListener('click', sendMessage);
+            
+            // Send message on Enter key
+            userInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    sendMessage();
+                }
+            });
+            
+            // Close chat button
+            closeChatBtn.addEventListener('click', function() {
+                document.querySelector('.chat-container').classList.add('hidden');
+                setTimeout(() => {
+                    addBotMessage("À bientôt chez Sakura Sushi ! N'hésitez pas à revenir si vous avez d'autres questions. 🍣");
+                }, 1000);
+            });
+            
+            function sendMessage() {
+                const message = userInput.value.trim();
+                if (message) {
+                    addUserMessage(message);
+                    userInput.value = '';
+                    processUserMessage(message);
+                }
+            }
+            
+            function addUserMessage(text) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'chat-message flex justify-end';
+                messageDiv.innerHTML = `
+                    <div class="max-w-xs md:max-w-md bg-blue-100 rounded-lg p-3">
+                        <p>${text}</p>
+                    </div>
+                    <div class="user-avatar w-8 h-8 rounded-full flex items-center justify-center ml-2">
+                        <i class="fas fa-user text-white text-xs"></i>
+                    </div>
+                `;
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            function addBotMessage(text, isHTML = false) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'chat-message flex';
+                if (isHTML) {
+                    messageDiv.innerHTML = `
+                        <div class="bot-avatar w-8 h-8 rounded-full flex items-center justify-center mr-2">
+                            <i class="fas fa-fish text-white text-xs"></i>
+                        </div>
+                        <div class="max-w-xs md:max-w-md bg-gray-100 rounded-lg p-3">
+                            ${text}
+                        </div>
+                    `;
+                } else {
+                    messageDiv.innerHTML = `
+                        <div class="bot-avatar w-8 h-8 rounded-full flex items-center justify-center mr-2">
+                            <i class="fas fa-fish text-white text-xs"></i>
+                        </div>
+                        <div class="max-w-xs md:max-w-md bg-gray-100 rounded-lg p-3">
+                            <p>${text}</p>
+                        </div>
+                    `;
+                }
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+            
+            function showQuickOptions(options) {
+                quickOptions.innerHTML = '';
+                options.forEach(option => {
+                    const btn = document.createElement('button');
+                    btn.className = 'option-btn bg-white border border-red-200 text-red-600 px-3 py-2 rounded-full text-sm hover:bg-red-50 transition transform';
+                    btn.textContent = option.text;
+                    btn.addEventListener('click', () => {
+                        addUserMessage(option.text);
+                        handleOptionAction(option.action);
+                    });
+                    quickOptions.appendChild(btn);
+                });
+                quickOptions.classList.remove('hidden');
+            }
+            
+            function hideQuickOptions() {
+                quickOptions.classList.add('hidden');
+            }
+            
+            async function processUserMessage(message) {
+                hideQuickOptions();
+                
+                // Simple keyword matching
+                if (message.toLowerCase().includes('menu') || message.toLowerCase().includes('carte')) {
+                    showMenu();
+                } 
+                else if (message.toLowerCase().includes('provenance') || message.toLowerCase().includes('origine') || message.toLowerCase().includes('produits')) {
+                    showOrigin();
+                }
+                else if (message.toLowerCase().includes('histoire') || message.toLowerCase().includes('fondateur') || message.toLowerCase().includes('création')) {
+                    showHistory();
+                }
+                else if (message.toLowerCase().includes('réservation') || message.toLowerCase().includes('réserver') || message.toLowerCase().includes('table')) {
+                    showReservation();
+                }
+                else {
+                    // Show typing indicator
+                    const typingIndicator = document.createElement('div');
+                    typingIndicator.className = 'chat-message flex';
+                    typingIndicator.innerHTML = `
+                        <div class="bot-avatar w-8 h-8 rounded-full flex items-center justify-center mr-2">
+                            <i class="fas fa-fish text-white text-xs"></i>
+                        </div>
+                        <div class="max-w-xs md:max-w-md bg-gray-100 rounded-lg p-3">
+                            <div class="typing flex space-x-1">
+                                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
+                                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.2s"></div>
+                                <div class="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style="animation-delay: 0.4s"></div>
+                            </div>
+                        </div>
+                    `;
+                    chatMessages.appendChild(typingIndicator);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                    
+                    try {
+                        // Here you would call your AI API
+                        // For now we simulate a response
+                        const aiResponse = await simulateAIResponse(message);
+                        
+                        // Remove typing indicator
+                        chatMessages.removeChild(typingIndicator);
+                        
+                        addBotMessage(aiResponse);
+                        
+                        // Show options after AI response
+                        setTimeout(() => {
+                            addBotMessage("Puis-je vous aider avec quelque chose d'autre ?");
+                            showQuickOptions([
+                                {text: "Voir le menu", action: "showMenu"},
+                                {text: "Provenance des produits", action: "showOrigin"},
+                                {text: "Histoire du restaurant", action: "showHistory"},
+                                {text: "Faire une réservation", action: "showReservation"}
+                            ]);
+                        }, 500);
+                    } catch (error) {
+                        chatMessages.removeChild(typingIndicator);
+                        addBotMessage("Désolé, je rencontre un problème technique. Pouvez-vous reformuler votre question ou choisir une option ci-dessous ?");
+                        showQuickOptions([
+                            {text: "Voir le menu", action: "showMenu"},
+                            {text: "Provenance des produits", action: "showOrigin"},
+                            {text: "Histoire du restaurant", action: "showHistory"},
+                            {text: "Faire une réservation", action: "showReservation"}
+                        ]);
+                    }
+                }
+            }
+            
+            function handleOptionAction(action) {
+                switch(action) {
+                    case 'showMenu':
+                        showMenu();
+                        break;
+                    case 'showOrigin':
+                        showOrigin();
+                        break;
+                    case 'showHistory':
+                        showHistory();
+                        break;
+                    case 'showReservation':
+                        showReservation();
+                        break;
+                }
+            }
+            
+            function showMenu() {
+                setTimeout(() => {
+                    addBotMessage(`
+                        <div>
+                            <h3 class="font-bold text-lg mb-2">Notre carte 🍣</h3>
+                            <div class="space-y-3">
+                                <div class="menu-item bg-white p-3 rounded-lg border border-gray-100">
+                                    <div class="flex justify-between">
+                                        <span class="font-medium">Assortiment Sakura</span>
+                                        <span class="text-red-500">32€</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mt-1">12 pièces (4 nigiri, 4 maki, 4 sashimi) + soupe miso</p>
+                                </div>
+                                
+                                <div class="menu-item bg-white p-3 rounded-lg border border-gray-100">
+                                    <div class="flex justify-between">
+                                        <span class="font-medium">Plateau Fuji</span>
+                                        <span class="text-red-500">45€</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mt-1">24 pièces variées pour 2 personnes</p>
+                                </div>
+                                
+                                <div class="menu-item bg-white p-3 rounded-lg border border-gray-100">
+                                    <div class="flex justify-between">
+                                        <span class="font-medium">Spécialité du Chef</span>
+                                        <span class="text-red-500">28€</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mt-1">Sélection surprise selon arrivage du jour</p>
+                                </div>
+                                
+                                <div class="menu-item bg-white p-3 rounded-lg border border-gray-100">
+                                    <div class="flex justify-between">
+                                        <span class="font-medium">Végétarien Kyoto</span>
+                                        <span class="text-red-500">24€</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 mt-1">12 pièces végétariennes (avocat, concombre, omelette)</p>
+                                </div>
+                            </div>
+                            <p class="mt-3 text-sm">Nous proposons également des boissons japonaises (saké, thé vert, bière Asahi).</p>
+                        </div>
+                    `, true);
+                    
+                    setTimeout(() => {
+                        addBotMessage("Souhaitez-vous plus d'informations ou voir autre chose ?");
+                        showQuickOptions([
+                            {text: "Provenance des produits", action: "showOrigin"},
+                            {text: "Histoire du restaurant", action: "showHistory"},
+                            {text: "Faire une réservation", action: "showReservation"},
+                            {text: "Retour au menu principal", action: "mainMenu"}
+                        ]);
+                    }, 500);
+                }, 1000);
+            }
+            
+            function showOrigin() {
+                setTimeout(() => {
+                    addBotMessage(`
+                        <div>
+                            <h3 class="font-bold text-lg mb-2">Nos produits de qualité 🐟</h3>
+                            <p class="mb-3">Chez Sakura Sushi, nous sélectionnons avec soin les meilleurs produits :</p>
+                            
+                            <ul class="space-y-2">
+                                <li class="flex items-start">
+                                    <i class="fas fa-check text-red-500 mt-1 mr-2"></i>
+                                    <span><strong>Poissons</strong> : Thon rouge d'Espagne, saumon de Norvège, daurade de Méditerranée</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-check text-red-500 mt-1 mr-2"></i>
+                                    <span><strong>Riz</strong> : Riz à sushi japonais de la région de Niigata</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-check text-red-500 mt-1 mr-2"></i>
+                                    <span><strong>Algues</strong> : Nori bio cultivé dans la baie d'Ariake</span>
+                                </li>
+                                <li class="flex items-start">
+                                    <i class="fas fa-check text-red-500 mt-1 mr-2"></i>
+                                    <span><strong>Légumes</strong> : Provenance locale et de saison</span>
+                                </li>
+                            </ul>
+                            
+                            <p class="mt-3">Tous nos produits sont frais et livrés quotidiennement.</p>
+                        </div>
+                    `, true);
+                    
+                    setTimeout(() => {
+                        addBotMessage("Voulez-vous en savoir plus sur autre chose ?");
+                        showQuickOptions([
+                            {text: "Voir le menu", action: "showMenu"},
+                            {text: "Histoire du restaurant", action: "showHistory"},
+                            {text: "Faire une réservation", action: "showReservation"},
+                            {text: "Retour au menu principal", action: "mainMenu"}
+                        ]);
+                    }, 500);
+                }, 1000);
+            }
+            
+            function showHistory() {
+                setTimeout(() => {
+                    addBotMessage(`
+                        <div>
+                            <h3 class="font-bold text-lg mb-2">Notre histoire ❤️</h3>
+                            <p class="mb-3">Sakura Sushi est né en 2010 de la passion de Takeshi Yamamoto, maître sushi formé à Tokyo.</p>
+                            
+                            <div class="space-y-2">
+                                <p>Après 10 ans d'apprentissage dans les meilleures sushiyas du Japon, Takeshi a voulu partager son art en France.</p>
+                                <p>Notre restaurant allie tradition japonaise et créativité, avec une attention particulière à la fraîcheur des produits.</p>
+                                <p>Le nom "Sakura" (cerisier en japonais) symbolise l'éphémère beauté que nous cherchons à capturer dans chaque plat.</p>
+                            </div>
+                            
+                            <p class="mt-3">Aujourd'hui, notre équipe de 5 sushi chefs perpétue cette philosophie avec passion.</p>
+                        </div>
+                    `, true);
+                    
+                    setTimeout(() => {
+                        addBotMessage("Puis-je vous aider sur autre chose ?");
+                        showQuickOptions([
+                            {text: "Voir le menu", action: "showMenu"},
+                            {text: "Provenance des produits", action: "showOrigin"},
+                            {text: "Faire une réservation", action: "showReservation"},
+                            {text: "Retour au menu principal", action: "mainMenu"}
+                        ]);
+                    }, 500);
+                }, 1000);
+            }
+            
+            function showReservation() {
+                setTimeout(() => {
+                    addBotMessage(`
+                        <div>
+                            <h3 class="font-bold text-lg mb-2">Réserver une table 🍽️</h3>
+                            <p class="mb-3">Vous pouvez réserver directement ici ou nous appeler au 01 23 45 67 89.</p>
+                            
+                            <form id="reservation-form" class="reservation-form space-y-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                                    <input type="date" class="w-full border rounded-lg px-3 py-2 focus:outline-none">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Heure</label>
+                                    <select class="w-full border rounded-lg px-3 py-2 focus:outline-none">
+                                        <option>12:00</option>
+                                        <option>12:30</option>
+                                        <option>13:00</option>
+                                        <option>19:00</option>
+                                        <option>19:30</option>
+                                        <option>20:00</option>
+                                        <option>20:30</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nombre de personnes</label>
+                                    <select class="w-full border rounded-lg px-3 py-2 focus:outline-none">
+                                        <option>1</option>
+                                        <option>2</option>
+                                        <option>3</option>
+                                        <option>4</option>
+                                        <option>5</option>
+                                        <option>6+</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Nom</label>
+                                    <input type="text" class="w-full border rounded-lg px-3 py-2 focus:outline-none">
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+                                    <input type="tel" class="w-full border rounded-lg px-3 py-2 focus:outline-none">
+                                </div>
+                                
+                                <button type="button" id="submit-reservation" class="w-full bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition mt-2">
+                                    Confirmer la réservation
+                                </button>
+                            </form>
+                        </div>
+                    `, true);
+                    
+                    document.getElementById('submit-reservation').addEventListener('click', function() {
+                        addBotMessage("Merci pour votre réservation ! Nous vous attendons avec impatience. Un SMS de confirmation vous sera envoyé.");
+                        
+                        setTimeout(() => {
+                            addBotMessage("Puis-je vous aider pour autre chose ?");
+                            showQuickOptions([
+                                {text: "Voir le menu", action: "showMenu"},
+                                {text: "Provenance des produits", action: "showOrigin"},
+                                {text: "Histoire du restaurant", action: "showHistory"},
+                                {text: "Retour au menu principal", action: "mainMenu"}
+                            ]);
+                        }, 1500);
+                    });
+                }, 1000);
+            }
+            
+            // Simulate AI response - replace with actual API call
+            async function simulateAIResponse(message) {
+                // This is just a placeholder - replace with fetch() to your AI API
+                return new Promise(resolve => {
+                    setTimeout(() => {
+                        // Simple responses for demo purposes
+                        if (message.toLowerCase().includes('horaire') || message.toLowerCase().includes('ouvert')) {
+                            resolve("Nous sommes ouverts du mardi au dimanche, de 12h à 14h30 et de 19h à 22h30.");
+                        } else if (message.toLowerCase().includes('végétarien') || message.toLowerCase().includes('végétalien')) {
+                            resolve("Nous proposons plusieurs options végétariennes et végétaliennes, comme notre menu Kyoto (12 pièces végétariennes) ou des makis concombre/avocat.");
+                        } else if (message.toLowerCase().includes('allergène') || message.toLowerCase().includes('allergie')) {
+                            resolve("Nous pouvons adapter nos plats aux allergies courantes (gluten, crustacés, etc.). Merci de nous prévenir lors de votre réservation.");
+                        } else {
+                            resolve(`En tant qu'assistant IA de Sakura Sushi, je peux vous informer que ${message} concerne probablement nos spécialités japonaises. Pour une réponse précise, je vous recommande de consulter notre menu ou de poser une question plus spécifique.`);
+                        }
+                    }, 1500);
+                });
+            }
+
+            function mainMenu() {
+                addBotMessage("Que souhaitez-vous faire ?");
+                showQuickOptions([
+                    {text: "Voir le menu", action: "showMenu"},
+                    {text: "Provenance des produits", action: "showOrigin"},
+                    {text: "Histoire du restaurant", action: "showHistory"},
+                    {text: "Faire une réservation", action: "showReservation"}
+                ]);
+            }
+        });
+    </script>
+</body>
+</html>
