@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CoachFit - Votre Coach Sportif Virtuel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .chat-message {
+            animation: fadeIn 0.3s ease-out;
+        }
+        
+        .typing-indicator::after {
+            content: '...';
+            animation: typing 1.5s infinite;
+        }
+        
+        @keyframes typing {
+            0% { content: '.'; }
+            33% { content: '..'; }
+            66% { content: '...'; }
+        }
+        
+        .exercise-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        #chat-container {
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans">
+    <div class="container mx-auto max-w-6xl p-4">
+        <!-- Main Content -->
+        <div class="flex flex-col lg:flex-row gap-6">
+            <!-- Chat Container -->
+            <div id="chat-container" class="flex-1 bg-white rounded-xl shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-blue-500 to-purple-600 p-4 text-white">
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center mr-3">
+                            <i class="fas fa-robot text-blue-600 text-xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="font-bold text-lg">CoachFit Assistant</h2>
+                            <p class="text-xs text-blue-100">En ligne</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Chat Messages -->
+                <div id="chat-messages" class="h-96 p-4 overflow-y-auto bg-gray-50">
+                    <!-- Welcome message -->
+                    <div class="chat-message mb-4">
+                        <div class="flex items-start">
+                            <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center mr-2">
+                                <i class="fas fa-robot text-white text-sm"></i>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg shadow-sm max-w-xs md:max-w-md">
+                                <p class="text-gray-800">Bonjour ! 👋 Je suis CoachFit, votre assistant de coaching sportif. Comment puis-je vous aider aujourd'hui ?</p>
+                                <p class="text-xs text-gray-500 mt-1">Juste maintenant</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Suggested questions -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4">
+                        <button onclick="sendSuggestedQuestion(this)" class="text-left bg-gray-100 hover:bg-gray-200 p-2 rounded-lg text-sm text-gray-700 transition">
+                            <i class="fas fa-dumbbell text-blue-500 mr-1"></i> Quels exercices puis-je faire à la maison ?
+                        </button>
+                        <button onclick="sendSuggestedQuestion(this)" class="text-left bg-gray-100 hover:bg-gray-200 p-2 rounded-lg text-sm text-gray-700 transition">
+                            <i class="fas fa-calendar-check text-purple-500 mr-1"></i> Comment organiser une séance découverte ?
+                        </button>
+                        <button onclick="sendSuggestedQuestion(this)" class="text-left bg-gray-100 hover:bg-gray-200 p-2 rounded-lg text-sm text-gray-700 transition">
+                            <i class="fas fa-star text-yellow-500 mr-1"></i> Quelle est votre réputation ?
+                        </button>
+                        <button onclick="sendSuggestedQuestion(this)" class="text-left bg-gray-100 hover:bg-gray-200 p-2 rounded-lg text-sm text-gray-700 transition">
+                            <i class="fas fa-question text-green-500 mr-1"></i> Comment fonctionne votre service ?
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- User Input -->
+                <div class="p-4 border-t border-gray-200 bg-white">
+                    <div class="flex">
+                        <input id="user-input" type="text" placeholder="Écrivez votre message..." class="flex-1 border border-gray-300 rounded-l-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <button onclick="sendMessage()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-r-lg transition">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                    <div class="flex justify-between mt-2 text-xs text-gray-500">
+                        <span>CoachFit Assistant - Votre coach personnel</span>
+                        <span id="typing-indicator" class="typing-indicator hidden">Le coach écrit</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Side Panel -->
+            <div class="w-full lg:w-80 flex flex-col gap-4">
+                <!-- Discovery Session Form -->
+                <div id="discovery-form" class="bg-white rounded-xl shadow-lg p-4 hidden">
+                    <h3 class="font-bold text-lg text-gray-800 mb-3 flex items-center">
+                        <i class="fas fa-calendar-alt text-purple-500 mr-2"></i> Séance découverte
+                    </h3>
+                    <form id="session-form" class="space-y-3">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Nom complet</label>
+                            <input type="text" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                            <input type="email" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Téléphone</label>
+                            <input type="tel" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Date souhaitée</label>
+                            <input type="date" required class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Heure</label>
+                            <select class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option>09:00 - 10:00</option>
+                                <option>11:00 - 12:00</option>
+                                <option>14:00 - 15:00</option>
+                                <option>17:00 - 18:00</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Objectifs</label>
+                            <textarea rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-purple-600 hover:bg-purple-700 text-white py-2 rounded-lg font-medium transition">
+                            <i class="fas fa-paper-plane mr-1"></i> Envoyer la demande
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Chatbot functionality
+        const chatMessages = document.getElementById('chat-messages');
+        const userInput = document.getElementById('user-input');
+        const typingIndicator = document.getElementById('typing-indicator');
+        const discoveryForm = document.getElementById('discovery-form');
+        
+        // Sample responses
+        const responses = {
+            "exercices": {
+                message: "Voici quelques exercices que vous pouvez faire à la maison sans équipement :",
+                exercises: [
+                    {
+                        name: "Pompes",
+                        description: "3 séries de 10-15 répétitions. Excellent pour les pectoraux et les triceps.",
+                        icon: "fa-hands-helping",
+                        color: "bg-purple-100 text-purple-600"
+                    },
+                    {
+                        name: "Squats",
+                        description: "4 séries de 15-20 répétitions. Parfait pour les jambes et les fessiers.",
+                        icon: "fa-running",
+                        color: "bg-blue-100 text-blue-600"
+                    },
+                    {
+                        name: "Gainage ventral",
+                        description: "3 séries de 30 secondes. Idéal pour renforcer les abdominaux profonds.",
+                        icon: "fa-procedures",
+                        color: "bg-green-100 text-green-600"
+                    }
+                ],
+                action: null
+            },
+            "séance découverte": {
+                message: "Vous pouvez réserver une séance découverte gratuite pour essayer notre service. Je vais afficher le formulaire de réservation.",
+                action: "show_discovery_form"
+            },
+            "réputation": {
+                message: "Notre service de coaching a une excellente réputation avec une note moyenne de 4.9/5 sur 250 avis. Nous avons aidé plus de 1000 clients à atteindre leurs objectifs sportifs. Voici quelques témoignages :",
+                testimonials: [
+                    "« Mon coach m'a aidé à perdre 12kg en 4 mois. Je n'aurais jamais cru possible de tels résultats ! » - Marc",
+                    "« Les séances sont variées et adaptées à mon niveau. Après 6 mois, je me sens en meilleure forme qu'à 20 ans ! » - Sophie",
+                    "« L'approche personnalisée fait toute la différence. Je recommande à 100% » - Thomas"
+                ],
+                action: null
+            },
+            "service": {
+                message: "Notre service de coaching sportif propose :\n\n• Des programmes personnalisés\n• Un suivi régulier avec votre coach\n• Des exercices adaptés à votre niveau\n• Des conseils en nutrition\n• Un espace membre avec vidéos explicatives\n\nTout cela pour vous aider à atteindre vos objectifs efficacement et durablement.",
+                action: null
+            },
+            "default": {
+                message: "Je n'ai pas compris votre demande. Pouvez-vous reformuler ou choisir parmi les options suivantes :\n\n• Exercices à la maison\n• Séance découverte\n• Réputation du service\n• Fonctionnement du service",
+                action: null
+            }
+        };
+        
+        // Send message function
+        function sendMessage() {
+            const message = userInput.value.trim();
+            if (message === "") return;
+            
+            // Add user message to chat
+            addMessage(message, 'user');
+            userInput.value = '';
+            
+            // Show typing indicator
+            typingIndicator.classList.remove('hidden');
+            
+            // Simulate thinking time
+            setTimeout(() => {
+                typingIndicator.classList.add('hidden');
+                processMessage(message.toLowerCase());
+            }, 1000 + Math.random() * 1000);
+        }
+        
+        // Send suggested question
+        function sendSuggestedQuestion(button) {
+            const question = button.textContent.trim();
+            addMessage(question, 'user');
+            
+            // Show typing indicator
+            typingIndicator.classList.remove('hidden');
+            
+            // Process after delay
+            setTimeout(() => {
+                typingIndicator.classList.add('hidden');
+                processMessage(question.toLowerCase());
+            }, 800);
+        }
+        
+        // Add message to chat
+        function addMessage(text, sender) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `chat-message mb-4 ${sender === 'user' ? 'user-message' : ''}`;
+            
+            const alignClass = sender === 'user' ? 'justify-end' : 'justify-start';
+            const bgColor = sender === 'user' ? 'bg-blue-500' : 'bg-white';
+            const textColor = sender === 'user' ? 'text-white' : 'text-gray-800';
+            
+            messageDiv.innerHTML = `
+                <div class="flex ${alignClass}">
+                    ${sender !== 'user' ? 
+                        `<div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center mr-2">
+                            <i class="fas fa-robot text-white text-sm"></i>
+                        </div>` : ''}
+                    <div class="${bgColor} ${textColor} p-3 rounded-lg shadow-sm max-w-xs md:max-w-md">
+                        <p>${text}</p>
+                        <p class="text-xs ${sender === 'user' ? 'text-blue-100' : 'text-gray-500'} mt-1">${getCurrentTime()}</p>
+                    </div>
+                    ${sender === 'user' ? 
+                        `<div class="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center ml-2">
+                            <i class="fas fa-user text-gray-600 text-sm"></i>
+                        </div>` : ''}
+                </div>
+            `;
+            
+            chatMessages.appendChild(messageDiv);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+        
+        // Process user message
+        function processMessage(message) {
+            let responseKey = 'default';
+            
+            if (message.includes('exercice') || message.includes('maison') || message.includes('entraînement')) {
+                responseKey = 'exercices';
+            } else if (message.includes('découverte') || message.includes('séance') || message.includes('essai')) {
+                responseKey = 'séance découverte';
+            } else if (message.includes('réputation') || message.includes('avis') || message.includes('témoignage')) {
+                responseKey = 'réputation';
+            } else if (message.includes('service') || message.includes('fonctionne') || message.includes('propose')) {
+                responseKey = 'service';
+            }
+            
+            const response = responses[responseKey];
+            addMessage(response.message, 'bot');
+            
+            // Add specific content based on response
+            if (responseKey === 'exercices') {
+                setTimeout(() => {
+                    const exercisesDiv = document.createElement('div');
+                    exercisesDiv.className = 'grid grid-cols-1 gap-3 mt-3';
+                    
+                    response.exercises.forEach(ex => {
+                        exercisesDiv.innerHTML += `
+                            <div class="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                                <div class="flex items-start">
+                                    <div class="${ex.color} p-2 rounded-lg mr-3">
+                                        <i class="fas ${ex.icon}"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800">${ex.name}</h4>
+                                        <p class="text-sm text-gray-600">${ex.description}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    chatMessages.appendChild(exercisesDiv);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 500);
+            } else if (responseKey === 'réputation') {
+                setTimeout(() => {
+                    const testimonialsDiv = document.createElement('div');
+                    testimonialsDiv.className = 'space-y-2 mt-3';
+                    
+                    response.testimonials.forEach(test => {
+                        testimonialsDiv.innerHTML += `
+                            <div class="bg-blue-50 p-3 rounded-lg">
+                                <p class="text-sm text-gray-700">"${test}"</p>
+                            </div>
+                        `;
+                    });
+                    
+                    chatMessages.appendChild(testimonialsDiv);
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }, 500);
+            }
+            
+            // Handle actions
+            if (response.action === 'show_discovery_form') {
+                setTimeout(() => {
+                    discoveryForm.classList.remove('hidden');
+                    discoveryForm.scrollIntoView({ behavior: 'smooth' });
+                }, 500);
+            }
+        }
+        
+        // Get current time for chat
+        function getCurrentTime() {
+            const now = new Date();
+            return `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}`;
+        }
+        
+        // Handle form submission
+        document.getElementById('session-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show success message
+            addMessage("Votre demande de séance découverte a bien été enregistrée. Un coach vous contactera dans les 24h pour confirmer.", 'bot');
+            discoveryForm.classList.add('hidden');
+            
+            // In a real app, you would send this data to your server
+            // Here we just simulate it
+            setTimeout(() => {
+                addMessage("Pendant que vous attendez la confirmation, puis-je vous aider avec autre chose ?", 'bot');
+            }, 1500);
+        });
+        
+        // Allow pressing Enter to send message
+        userInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
